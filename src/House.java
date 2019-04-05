@@ -2,26 +2,26 @@ public class House {
     // dane budynku
     private String name;
     private String description;
-    private double areaUsable = 0.00;
-    private double volumeBrutto = 0.00;
-    private double windowsArea = 0.00;
-    private double buildingArea = 0.00;
-    private double roofArea = 0.00;
+    private Double areaUsable = 0.00;
+    private Double volumeBrutto = 0.00;
+    private Double windowsArea = 0.00;
+    private Double buildingArea = 0.00;
+    private Double roofArea = 0.00;
 
 
     // koszty etapów
-    private double costZeroStateTotal = 0.00; // stan zerowy
-    private double costCrudeTotal = 0.00; // stan surowy otwarty bez pokrycia dachu
-    private double costRoofTotal = 0.00; // pokrycie dachu
-//    private double costWindowsTotal = 0.00; // koszt okien i drzwi zewenętrznych
-//    private double costSanitInstTotal = 0.00; // koszt instalacji sanitarnych bez wentylacji mechanciznej
-//    private double costElectInstTotal = 0.00; // koszt instalacji elektrycznych
-//    private double costWentInstTotal = 0.00; // ksozt wentylacji mechanicznej
-//    private double costInterFinnishTotal = 0.00; // koszt wykończenia wewnętrznego do stanu deweloperskiego
-//    private double costFacadesBrickTotal = 0.00; // kosszt wykończenia zewnętrznego
+    private Double costZeroStateTotal = 0.00; // stan zerowy
+    private Double costCrudeTotal = 0.00; // stan surowy otwarty bez pokrycia dachu
+    private Double costRoofTotal = 0.00; // pokrycie dachu
+//    private Double costWindowsTotal = 0.00; // koszt okien i drzwi zewenętrznych
+//    private Double costSanitInstTotal = 0.00; // koszt instalacji sanitarnych bez wentylacji mechanciznej
+//    private Double costElectInstTotal = 0.00; // koszt instalacji elektrycznych
+//    private Double costWentInstTotal = 0.00; // ksozt wentylacji mechanicznej
+//    private Double costInterFinnishTotal = 0.00; // koszt wykończenia wewnętrznego do stanu deweloperskiego
+//    private Double costFacadesBrickTotal = 0.00; // kosszt wykończenia zewnętrznego
 
 
-    public House(String name, String description, double areaUsable, double volumeBrutto, double windowsArea, double buildingArea, double roofArea, double costZeroStateTotal, double costCrude, double costRoof) {
+    public House(String name, String description, Double areaUsable, Double volumeBrutto, Double windowsArea, Double buildingArea, Double roofArea, Double costZeroStateTotal, Double costCrude, Double costRoof) {
         this.name = name;
         this.description = description;
         this.areaUsable = areaUsable;
@@ -46,5 +46,27 @@ public class House {
 
     public Double getCostRoof() {
         return costRoofTotal / roofArea;
+    }
+
+    @Override
+    public String toString() {
+        return "House{" +
+                "name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", areaUsable=" + areaUsable +
+                ", volumeBrutto=" + volumeBrutto +
+                ", windowsArea=" + windowsArea +
+                ", buildingArea=" + buildingArea +
+                ", roofArea=" + roofArea +
+                ", costZeroStateTotal=" + costZeroStateTotal +
+                ", costCrudeTotal=" + costCrudeTotal +
+                ", costRoofTotal=" + costRoofTotal +
+                '}';
+    }
+
+    public String toExport() {
+        return name + ", " + description + ", "
+                + areaUsable + ", " + volumeBrutto + ", " + windowsArea + ", " + buildingArea +
+                ", " + roofArea + ", " + costZeroStateTotal + ", " + costCrudeTotal + ", " + costRoofTotal;
     }
 }

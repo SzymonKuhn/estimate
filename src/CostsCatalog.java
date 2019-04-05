@@ -33,34 +33,31 @@ public class CostsCatalog {
     }
 
     public Double getMaxValue(Integer key) {
-        OptionalDouble result = mapOfCosts.get(key).stream()
-                .mapToDouble(a -> a)
+        Optional<Double> result = mapOfCosts.get(key).stream()
                 .reduce((a, b) -> {
                     if (a > b) {
                         return a;
                     }
                     return b;
                 });
-        return result.getAsDouble();
+        return result.get();
     }
 
     public Double getMinValue(Integer key) {
-        OptionalDouble result = mapOfCosts.get(key).stream()
-                .mapToDouble(a -> a)
+        Optional<Double> result = mapOfCosts.get(key).stream()
                 .reduce((a, b) -> {
                     if (a < b) {
                          return a;
                     }
                     return b;
                 });
-        return result.getAsDouble();
+        return result.get();
     }
 
     public Double getAvargeValue (Integer key) {
-        OptionalDouble sum = mapOfCosts.get(key).stream()
-                .mapToDouble(a -> a)
+        Optional<Double> sum = mapOfCosts.get(key).stream()
                 .reduce((a, b) -> a + b);
-                return sum.getAsDouble() / mapOfCosts.get(key).size();
+                return sum.get() / mapOfCosts.get(key).size();
     }
 
     public Map<Integer, List<Double>> getMapOfCosts() {
