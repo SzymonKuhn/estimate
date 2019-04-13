@@ -69,4 +69,44 @@ public class House {
                 + areaUsable + ", " + volumeBrutto + ", " + windowsArea + ", " + buildingArea +
                 ", " + roofArea + ", " + costZeroStateTotal + ", " + costCrudeTotal + ", " + costRoofTotal;
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Double getAreaUsable() {
+        return areaUsable;
+    }
+
+    public Double getVolumeBrutto() {
+        return volumeBrutto;
+    }
+
+    public Double getWindowsArea() {
+        return windowsArea;
+    }
+
+    public Double getBuildingArea() {
+        return buildingArea;
+    }
+
+    public Double getRoofArea() {
+        return roofArea;
+    }
+
+    public Double getCostZeroStateTotal() {
+        return costZeroStateTotal;
+    }
+
+    public Double getCostCrudeTotal() {
+        return costCrudeTotal;
+    }
+
+    public Double getCostRoofTotal() {
+        return costRoofTotal;
+    }
 }
