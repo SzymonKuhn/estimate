@@ -1,3 +1,8 @@
+import costs.CostsManager;
+import estimates.Estimate;
+import estimates.EstimatesManager;
+import houses.House;
+import houses.HousesManager;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -12,21 +17,30 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import types.AreaTypes;
+import types.CostsTypes;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class EstimateApp extends Application {
-    private static ObservableList<House> houseList = FXCollections.observableArrayList();
-    private static List<Estimate> estimateList = new ArrayList<>();
+//    private static ObservableList<House> houseList = FXCollections.observableArrayList();
+    //    private static List<Estimate> estimateList = new ArrayList<>(); // usunąć
     private static Path basePath = Paths.get("D:\\Costs");
-    private static Path fileMapOfCosts = basePath.resolve("map_of_costs.txt");
+    //    private static Path fileMapOfCosts = basePath.resolve("map_of_costs.txt"); // usunąć
     private static Path fileListOfHouses = basePath.resolve("list_of_houses.txt");
-    private static Path fileListOfEstimates = basePath.resolve("list_of_estimates.txt");
-    CostsCatalog costsCatalog = new CostsCatalog();
+    //    private static Path fileListOfEstimates = basePath.resolve("list_of_estimates.txt"); // usunąć
+//    CostsCatalog costsCatalog = new CostsCatalog(); // usunąć
+    private static HousesManager housesManager = new HousesManager();
+    private static EstimatesManager estimatesManager = new EstimatesManager();
+    private static CostsManager costsManager = new CostsManager();
+
 
     // main
     public static void main(String[] args) {
@@ -38,20 +52,22 @@ public class EstimateApp extends Application {
     public void start(Stage primaryStage) throws Exception {
         //tworzenie mapy kosztów
         // czy ta mapa powinna być w metodzie start a nie w klasie CostsCatalog???
-        costsCatalog.createMapOfCosts();
+//        costsCatalog.createMapOfCosts();
 
         //import domów z pliku
-        houseList = listOfHousesImport();
+//        houseList = listOfHousesImport();
+        listOfHousesImport();
 
         //konwersja domów na katalog kosztów
-        for (House house : houseList) {
-            addHouseToCostCatalogue(house, costsCatalog);
-        }
+//        for (House house : houseList) {
+//            addHouseToCostCatalogue(house, costsCatalog);
+//        }
 
         //wydruk na konsoli dla sprawdzenia
-        System.out.println(houseList);
-        System.out.println();
-        System.out.println(costsCatalog.getMapOfCosts());
+        System.out.println("Wydruk listy domów z importu: ");
+        System.out.println(housesManager.getHouseList().toString());
+
+//        System.out.println(costsCatalog.getMapOfCosts());
 
         //File menu
         Menu fileMenu = new Menu("Plik");
@@ -59,7 +75,7 @@ public class EstimateApp extends Application {
         MenuItem calculateHouse = new MenuItem("Oblicz...");
         SeparatorMenuItem separatorMenuItem = new SeparatorMenuItem();
         MenuItem close = new MenuItem("Zakończ");
-        fileMenu.getItems().addAll(addHouse, calculateHouse, separatorMenuItem,close);
+        fileMenu.getItems().addAll(addHouse, calculateHouse, separatorMenuItem, close);
 
         //Show menu
         Menu showMenu = new Menu("Pokaż");
@@ -285,7 +301,7 @@ public class EstimateApp extends Application {
         roofCostColumn.setMinWidth(30);
         roofCostColumn.setCellValueFactory(new PropertyValueFactory<>("costRoofTotal"));
 
-        housesTableView.setItems(houseList);
+//        housesTableView.setItems(houseList);
         housesTableView.getColumns().addAll(nameColumn, descrColumn, areaUsableColumn, volumeBruttoColumn,
                 windowsAreaColumn, buildingAreaColumn, roofAreaColumn, zeroCostColumn, crudeCostColumn,
                 roofCostColumn);
@@ -331,8 +347,18 @@ public class EstimateApp extends Application {
                 costCrudeTotal = Double.parseDouble(costCrudeFiled.getText());
                 costRoofTotal = Double.parseDouble(costRoofField.getText());
 
-                House house = new House(houseName, houseDescript, areaUsable, volumeBrutto, windowsArea, buildingArea,
-                        roofArea, costZeroStateTotal, costCrudeTotal, costRoofTotal);
+//                House house = new House(houseName, houseDescript);
+                House house = new House(houseName, houseDescript);
+                house.addArea(AreaTypes.USABLE_AREA, areaUsable);
+                house.addArea(AreaTypes.VOLUME, volumeBrutto);
+                house.addArea(AreaTypes.WINDOWS_AREA, windowsArea);
+                house.addArea(AreaTypes.BUILDING_AREA, buildingArea);
+                house.addArea(AreaTypes.ROOF_AREA, roofArea);
+                house.addCost(CostsTypes.COST_ZERO_STATE, costZeroStateTotal);
+                house.addCost(CostsTypes.COST_CRUDE, costCrudeTotal);
+                house.addCost(CostsTypes.COST_ROOF, costRoofTotal);
+                housesManager.addHouse(house);
+
                 nameField.clear();
                 descriptArea.clear();
                 areaUsableField.clear();
@@ -343,12 +369,11 @@ public class EstimateApp extends Application {
                 costZeroField.clear();
                 costCrudeFiled.clear();
                 costRoofField.clear();
-                addHouseToCostCatalogue(house, costsCatalog);
-                houseList.add(house);
-
-                System.out.println(houseList);
-                System.out.println(costsCatalog.getMapOfCosts());
-                primaryStage.setScene(mainScene);
+                System.out.println(house);
+                System.out.println(housesManager.getHouseList().toString());
+                AlertWindow alertWindow = new AlertWindow();
+                alertWindow.display("Dodano dom", "Dom został dodany do bazy danych");
+                borderPane.setCenter(null);
             } catch (Exception e) {
                 AlertWindow.display("Błędne dane", "Podano błędne dane");
                 e.getMessage();
@@ -372,79 +397,79 @@ public class EstimateApp extends Application {
         });
 
         //przycisk utwórz kosztorys
-        calculateEstimateButton.setOnAction(a -> {
-            Double costZeroStateTotalMin = costsCatalog.getMinValue(CostsTypes.COST_ZERO_STATE.getId());
-            Double costZeroStateTotalAvg = costsCatalog.getAvargeValue(CostsTypes.COST_ZERO_STATE.getId());
-            Double costZeroStateTotalMax = costsCatalog.getMaxValue(CostsTypes.COST_ZERO_STATE.getId());
-            Double costCrudeTotalMin = costsCatalog.getMinValue(CostsTypes.COST_CRUDE.getId());
-            Double costCrudeTotalAvg = costsCatalog.getAvargeValue(CostsTypes.COST_CRUDE.getId());
-            Double costCrudeTotalMax = costsCatalog.getMaxValue(CostsTypes.COST_CRUDE.getId());
-            Double costRoofTotalMin = costsCatalog.getMinValue(CostsTypes.COST_ROOF.getId());
-            Double costRoofTotalAvg = costsCatalog.getAvargeValue(CostsTypes.COST_ROOF.getId());
-            Double costRoofTotalMax = costsCatalog.getMaxValue(CostsTypes.COST_ROOF.getId());
-            Double areaUsable = null;
-            Double volumeBrutto = null;
-            Double windowsArea = null;
-            Double buildingArea = null;
-            Double roofArea = null;
-
-            try {
-                areaUsable = Double.parseDouble(estimateAreaUsableField.getText());
-                volumeBrutto = Double.parseDouble(estimateVolumeBruttoFiled.getText());
-                windowsArea = Double.parseDouble(estimateWindowsAreaField.getText());
-                buildingArea = Double.parseDouble(estimateBuildingAreaField.getText());
-                roofArea = Double.parseDouble(estimateRoofAreaField.getText());
-            } catch (Exception e) {
-                AlertWindow.display("Błędne dane", "Podano błędne dane");
-                e.getMessage();
-            }
-            Estimate estimate = new Estimate(estimateNameField.getText(), estimateDescriptArea.getText(),areaUsable,
-                    volumeBrutto, windowsArea, buildingArea, roofArea);
-            estimate.setCostZeroStateTotalMin(costZeroStateTotalMin);
-            estimate.setCostZeroStateTotalAvg(costZeroStateTotalAvg);
-            estimate.setCostZeroStateTotalMax(costZeroStateTotalMax);
-            estimate.setCostCrudeTotalMin(costCrudeTotalMin);
-            estimate.setCostCrudeTotalAvg(costCrudeTotalAvg);
-            estimate.setCostCrudeTotalMax(costCrudeTotalMax);
-            estimate.setCostRoofTotalMin(costRoofTotalMin);
-            estimate.setCostRoofTotalAvg(costRoofTotalAvg);
-            estimate.setCostRoofTotalMax(costRoofTotalMax);
-
-            estimateZeroMinLabel.setText(estimate.getCostZeroStateTotalMin().toString());
-            estimateZeroAvgLabel.setText(estimate.getCostZeroStateTotalAvg().toString());
-            estimateZeroMaxLabel.setText(estimate.getCostZeroStateTotalMax().toString());
-            estimateCrudeMinLabel.setText(estimate.getCostCrudeTotalMin().toString());
-            estimateCrudeAvgLabel.setText(estimate.getCostCrudeTotalAvg().toString());
-            estimateCrudeMaxLabel.setText(estimate.getCostCrudeTotalMax().toString());
-            estimateRoofMinLabel.setText(estimate.getCostRoofTotalMin().toString());
-            estimateRoofAvgLabel.setText(estimate.getCostRoofTotalAvg().toString());
-            estimateRoofMaxLabel.setText(estimate.getCostRoofTotalMax().toString());
-            estimateList.add(estimate);
-        });
-
-        // przycisk anuluj kosztorys
-        cancelEstimateButton.setOnAction(a -> {
-            estimateNameField.clear();
-            estimateDescriptArea.clear();
-            estimateAreaUsableField.clear();
-            estimateVolumeBruttoFiled.clear();
-            estimateWindowsAreaField.clear();
-            estimateBuildingAreaField.clear();
-            estimateRoofAreaField.clear();
-            borderPane.setCenter(null);
-        });
+//        calculateEstimateButton.setOnAction(a -> {
+//            Double costZeroStateTotalMin = costsCatalog.getMinValue(CostsTypes.COST_ZERO_STATE.getId());
+//            Double costZeroStateTotalAvg = costsCatalog.getAvargeValue(CostsTypes.COST_ZERO_STATE.getId());
+//            Double costZeroStateTotalMax = costsCatalog.getMaxValue(CostsTypes.COST_ZERO_STATE.getId());
+//            Double costCrudeTotalMin = costsCatalog.getMinValue(CostsTypes.COST_CRUDE.getId());
+//            Double costCrudeTotalAvg = costsCatalog.getAvargeValue(CostsTypes.COST_CRUDE.getId());
+//            Double costCrudeTotalMax = costsCatalog.getMaxValue(CostsTypes.COST_CRUDE.getId());
+//            Double costRoofTotalMin = costsCatalog.getMinValue(CostsTypes.COST_ROOF.getId());
+//            Double costRoofTotalAvg = costsCatalog.getAvargeValue(CostsTypes.COST_ROOF.getId());
+//            Double costRoofTotalMax = costsCatalog.getMaxValue(CostsTypes.COST_ROOF.getId());
+//            Double areaUsable = null;
+//            Double volumeBrutto = null;
+//            Double windowsArea = null;
+//            Double buildingArea = null;
+//            Double roofArea = null;
+//
+//            try {
+//                areaUsable = Double.parseDouble(estimateAreaUsableField.getText());
+//                volumeBrutto = Double.parseDouble(estimateVolumeBruttoFiled.getText());
+//                windowsArea = Double.parseDouble(estimateWindowsAreaField.getText());
+//                buildingArea = Double.parseDouble(estimateBuildingAreaField.getText());
+//                roofArea = Double.parseDouble(estimateRoofAreaField.getText());
+//            } catch (Exception e) {
+//                AlertWindow.display("Błędne dane", "Podano błędne dane");
+//                e.getMessage();
+//            }
+//            Estimate estimate = new Estimate(estimateNameField.getText(), estimateDescriptArea.getText(), areaUsable,
+//                    volumeBrutto, windowsArea, buildingArea, roofArea);
+//            estimate.setCostZeroStateTotalMin(costZeroStateTotalMin);
+//            estimate.setCostZeroStateTotalAvg(costZeroStateTotalAvg);
+//            estimate.setCostZeroStateTotalMax(costZeroStateTotalMax);
+//            estimate.setCostCrudeTotalMin(costCrudeTotalMin);
+//            estimate.setCostCrudeTotalAvg(costCrudeTotalAvg);
+//            estimate.setCostCrudeTotalMax(costCrudeTotalMax);
+//            estimate.setCostRoofTotalMin(costRoofTotalMin);
+//            estimate.setCostRoofTotalAvg(costRoofTotalAvg);
+//            estimate.setCostRoofTotalMax(costRoofTotalMax);
+//
+//            estimateZeroMinLabel.setText(estimate.getCostZeroStateTotalMin().toString());
+//            estimateZeroAvgLabel.setText(estimate.getCostZeroStateTotalAvg().toString());
+//            estimateZeroMaxLabel.setText(estimate.getCostZeroStateTotalMax().toString());
+//            estimateCrudeMinLabel.setText(estimate.getCostCrudeTotalMin().toString());
+//            estimateCrudeAvgLabel.setText(estimate.getCostCrudeTotalAvg().toString());
+//            estimateCrudeMaxLabel.setText(estimate.getCostCrudeTotalMax().toString());
+//            estimateRoofMinLabel.setText(estimate.getCostRoofTotalMin().toString());
+//            estimateRoofAvgLabel.setText(estimate.getCostRoofTotalAvg().toString());
+//            estimateRoofMaxLabel.setText(estimate.getCostRoofTotalMax().toString());
+//            estimateList.add(estimate);
+//        });
+//
+//        // przycisk anuluj kosztorys
+//        cancelEstimateButton.setOnAction(a -> {
+//            estimateNameField.clear();
+//            estimateDescriptArea.clear();
+//            estimateAreaUsableField.clear();
+//            estimateVolumeBruttoFiled.clear();
+//            estimateWindowsAreaField.clear();
+//            estimateBuildingAreaField.clear();
+//            estimateRoofAreaField.clear();
+//            borderPane.setCenter(null);
+//        });
 
     }//start
 
     //adding house to catalogue
-    public static void addHouseToCostCatalogue(House house, CostsCatalog costsCatalog) {
-        costsCatalog.addCostToCatalog(CostsTypes.COST_ZERO_STATE.getId(), house.getCostZeroState());
-        costsCatalog.addCostToCatalog(CostsTypes.COST_CRUDE.getId(), house.getCostCrude());
-        costsCatalog.addCostToCatalog(CostsTypes.COST_ROOF.getId(), house.getCostRoof());
-    }
+//    public static void addHouseToCostCatalogue(House house, CostsCatalog costsCatalog) {
+//        costsCatalog.addCostToCatalog(CostsTypes.COST_ZERO_STATE.getId(), house.getCostZeroState());
+//        costsCatalog.addCostToCatalog(CostsTypes.COST_CRUDE.getId(), house.getCostCrude());
+//        costsCatalog.addCostToCatalog(CostsTypes.COST_ROOF.getId(), house.getCostRoof());
+//    }
 
     //eksport files
-    public static void exportFiles(CostsCatalog costsCatalog) {
+    public static void exportFiles() {
         try {
             if (!Files.exists(basePath)) {
                 Files.createDirectory(basePath);
@@ -452,22 +477,22 @@ public class EstimateApp extends Application {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        // export map of costs
-        try {
-            if (!Files.exists(fileMapOfCosts)) {
-                Files.createFile(fileMapOfCosts);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try (FileWriter writer = new FileWriter(fileMapOfCosts.toString())) {
-            writer.write(costsCatalog.getMapOfCosts().toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        //export list of houses
+//
+//        // export map of costs
+//        try {
+//            if (!Files.exists(fileMapOfCosts)) {
+//                Files.createFile(fileMapOfCosts);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        try (FileWriter writer = new FileWriter(fileMapOfCosts.toString())) {
+//            writer.write(costsCatalog.getMapOfCosts().toString());
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        //export list of houses
         try {
             if (!Files.exists(fileListOfHouses)) {
                 Files.createFile(fileListOfHouses);
@@ -476,32 +501,32 @@ public class EstimateApp extends Application {
             e.printStackTrace();
         }
         try (FileWriter writer = new FileWriter(fileListOfHouses.toString())) {
-            for (House house : houseList) {
-                writer.write(house.toExport() + "\r\n");
+            for (House house : housesManager.getHouseList()) {
+                writer.write( house.toString() + "\r\n");
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        //export list od estimates
-        try {
-            if (!Files.exists(fileListOfEstimates)) {
-                Files.createFile(fileListOfEstimates);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try (FileWriter writer = new FileWriter(fileListOfEstimates.toString())) {
-            for (Estimate estimate : estimateList) {
-                writer.write(estimate.toString() + "\r\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//
+//        //export list od estimates
+//        try {
+//            if (!Files.exists(fileListOfEstimates)) {
+//                Files.createFile(fileListOfEstimates);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        try (FileWriter writer = new FileWriter(fileListOfEstimates.toString())) {
+//            for (Estimate estimate : estimateList) {
+//                writer.write(estimate.toString() + "\r\n");
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
-    //import list of houses
-    public static ObservableList<House> listOfHousesImport() {
+//    //import list of houses
+    public static void listOfHousesImport() {
         List<String> stringList = new ArrayList<>();
         ObservableList<House> importedHouseList = FXCollections.observableArrayList();
         String string;
@@ -516,26 +541,29 @@ public class EstimateApp extends Application {
                     ioe.getMessage();
                 }
                 for (String stringHouse : stringList) {
-                    String[] stringArray = stringHouse.split(", ");
-                    House house = new House(stringArray[0], stringArray[1], Double.parseDouble(stringArray[2]), Double.parseDouble(stringArray[3]),
-                            Double.parseDouble(stringArray[4]), Double.parseDouble(stringArray[5]), Double.parseDouble(stringArray[6]),
-                            Double.parseDouble(stringArray[7]), Double.parseDouble(stringArray[8]), Double.parseDouble(stringArray[9]));
-                    importedHouseList.add(house);
+//                    String[] stringArray = stringHouse.split(", ");
+//                    House house = new House(stringArray[0], stringArray[1], Double.parseDouble(stringArray[2]), Double.parseDouble(stringArray[3]),
+//                            Double.parseDouble(stringArray[4]), Double.parseDouble(stringArray[5]), Double.parseDouble(stringArray[6]),
+//                            Double.parseDouble(stringArray[7]), Double.parseDouble(stringArray[8]), Double.parseDouble(stringArray[9]));
+//                    importedHouseList.add(house);
+                    House house = housesManager.importHouse(stringHouse);
+                    housesManager.addHouse(house);
                 }
             }
         } catch (Exception e) {
             e.getMessage();
         }
-        return importedHouseList;
     }
-
-    //close
+//
+//    //close
     private void closeMethod() {
         boolean answer = ConfirmWindow.display("Zakończ", "Czy na pewno chcesz zamknąć program?");
         if (answer) {
-            exportFiles(costsCatalog);
+            exportFiles();
             Platform.exit();
         }
     }
+
+
 
 }//class

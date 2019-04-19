@@ -11,7 +11,8 @@ public class AlertWindow {
         Stage window = new Stage();
         window.initModality(Modality.APPLICATION_MODAL);
         window.setTitle(title);
-        window.setMinWidth(250);
+        window.setMinWidth(400);
+        window.setMinHeight(300);
         Label label = new Label();
         label.setText(message);
         Button button = new Button("Ok");
